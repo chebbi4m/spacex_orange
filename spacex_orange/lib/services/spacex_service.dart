@@ -7,16 +7,9 @@ class SpaceXService {
   final String baseUrl = 'https://api.spacexdata.com/v4/launches';
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<List<SpaceXLaunch>> getLaunches({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      final cachedLaunches = await _dbHelper.getLaunches();
-      if (cachedLaunches.isNotEmpty) {
-        return cachedLaunches;
-      }
-    }
-
+  Future<List<SpaceXLaunch>> getLaunches({int skip = 0, int take = 10}) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl?limit=10'));
+      final response = await http.get(Uri.parse('$baseUrl?limit=$take&offset=$skip'));
 
       if (response.statusCode == 200) {
         final List<dynamic> launchesJson = jsonDecode(response.body);

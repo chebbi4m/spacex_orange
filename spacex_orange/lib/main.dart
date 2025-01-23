@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:spacex_orange/providers/launch_provider.dart';
 import 'package:spacex_orange/screens/launches_page.dart';
+import 'package:spacex_orange/screens/offline_mode_page.dart';
 
 void main() {
   runApp(
@@ -23,7 +25,48 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LaunchesPage(),
+      home: FutureBuilder<ConnectivityResult>(
+        future: Connectivity().checkConnectivity(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Show a loading indicator while checking connectivity
+            return Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.blue)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Checking connectivity...',
+                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else if (snapshot.hasData) {
+            // Navigate to the appropriate page based on connectivity
+            if (snapshot.data == ConnectivityResult.none) {
+              return const OfflineModePage();
+            } else {
+              return const LaunchesPage();
+            }
+          } else {
+            // Handle error case
+            return Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(
+                child: Text(
+                  'Failed to check connectivity.',
+                  style: TextStyle(color: Colors.red[400], fontSize: 16),
+                ),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }

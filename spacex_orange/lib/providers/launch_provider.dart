@@ -8,40 +8,67 @@ class SpaceXProvider with ChangeNotifier {
   List<SpaceXLaunch> _launches = [];
   SpaceXLaunch? _selectedLaunch;
   bool _isLoading = false;
+  bool _isLoadingMore = false; // For pagination
   String? _error;
   bool _isOffline = false;
+  int _skip = 0; // Pagination offset
+  final int _take = 10; // Number of items to fetch per request
 
   List<SpaceXLaunch> get launches => _launches;
   SpaceXLaunch? get selectedLaunch => _selectedLaunch;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore; // For pagination
   String? get error => _error;
   bool get isOffline => _isOffline;
 
   Future<void> fetchLaunches({bool forceRefresh = false}) async {
-  _isLoading = true;
-  _error = null;
-  notifyListeners();
-
-  try {
-    // Check internet connectivity
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      _isOffline = true;
-      _launches = await _spaceXService.getLaunches(forceRefresh: false); // Fetch cached data
-    } else {
-      _isOffline = false;
-      _launches = await _spaceXService.getLaunches(forceRefresh: forceRefresh);
+    if (forceRefresh) {
+      _skip = 0; // Reset skip when forcing a refresh
+      _launches = []; // Clear existing launches
     }
+
+    _isLoading = true;
     _error = null;
-  } catch (e) {
-    print("Error fetching launches: $e"); // Add detailed error logging
-    _error = 'Failed to load SpaceX launches.';
-    _launches = [];
-  } finally {
-    _isLoading = false;
     notifyListeners();
+
+    try {
+      // Check internet connectivity
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        _isOffline = true;
+        _launches = await _spaceXService.getLaunches(skip: _skip, take: _take);
+      } else {
+        _isOffline = false;
+        final newLaunches = await _spaceXService.getLaunches(skip: _skip, take: _take);
+        _launches.addAll(newLaunches); // Append new launches to the list
+      }
+      _error = null;
+    } catch (e) {
+      _error = 'Failed to load SpaceX launches.';
+      _launches = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
+
+  Future<void> loadMoreLaunches() async {
+    if (_isLoadingMore) return; // Prevent multiple simultaneous requests
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      _skip += _take; // Increment skip for pagination
+      final newLaunches = await _spaceXService.getLaunches(skip: _skip, take: _take);
+      _launches.addAll(newLaunches); // Append new launches to the list
+    } catch (e) {
+      _error = 'Failed to load more SpaceX launches.';
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> fetchLaunchDetails(String id) async {
     _isLoading = true;

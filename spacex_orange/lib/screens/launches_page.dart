@@ -32,18 +32,33 @@ class _LaunchesPageState extends State<LaunchesPage> {
           } else if (spaceXProvider.error != null) {
             return Center(child: Text(spaceXProvider.error!));
           } else {
-            return RefreshIndicator(
-              onRefresh: () => spaceXProvider.fetchLaunches(forceRefresh: true),
-              child: ListView.builder(
-                itemCount: spaceXProvider.launches.length,
-                itemBuilder: (context, index) {
-                  final launch = spaceXProvider.launches[index];
-                  return LaunchItem(
-                    launch: launch,
-                    onTap: () => _showLaunchDetails(context, launch),
-                  );
-                },
-              ),
+            return Column(
+              children: [
+                if (spaceXProvider.isOffline)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.orange,
+                    child: const Text(
+                      'Activating offline mode',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () => spaceXProvider.fetchLaunches(forceRefresh: true),
+                    child: ListView.builder(
+                      itemCount: spaceXProvider.launches.length,
+                      itemBuilder: (context, index) {
+                        final launch = spaceXProvider.launches[index];
+                        return LaunchItem(
+                          launch: launch,
+                          onTap: () => _showLaunchDetails(context, launch),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             );
           }
         },

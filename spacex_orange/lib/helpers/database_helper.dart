@@ -49,8 +49,9 @@ class DatabaseHelper {
   Database db = await database;
   final List<Map<String, dynamic>> maps = await db.query('launches');
   return List.generate(maps.length, (i) {
-    return SpaceXLaunch.fromJson(maps[i]);
+    return SpaceXLaunch.fromMap(maps[i]);
   });
+
 }
 
 

@@ -18,7 +18,7 @@ class SpaceXLaunch {
       id: json['id'] ?? '',
       missionName: json['name'] ?? 'Unknown Mission',
       launchDate: json['date_utc'] ?? 'Unknown Date',
-      rocketName: json['rocket'] ?? 'Unknown Rocket',
+      rocketName: json['rocket'] is String ? json['rocket'] : (json['rocket']['name'] ?? 'Unknown Rocket'), // Handle rocket object
       details: json['details'] ?? 'No details available',
     );
   }
@@ -26,7 +26,7 @@ class SpaceXLaunch {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'missionName': missionName,
+      'name': missionName,
       'launchDate': launchDate,
       'rocketName': rocketName,
       'details': details,
@@ -36,7 +36,7 @@ class SpaceXLaunch {
   factory SpaceXLaunch.fromMap(Map<String, dynamic> map) {
     return SpaceXLaunch(
       id: map['id'],
-      missionName: map['missionName'],
+      missionName: map['name'],
       launchDate: map['launchDate'],
       rocketName: map['rocketName'],
       details: map['details'],
@@ -48,9 +48,8 @@ class SpaceXLaunch {
       'id': id,
       'name': missionName,
       'launchDate': launchDate,
-      'details': details,
       'rocketName': rocketName,
+      'details': details,
     };
   }
 }
-

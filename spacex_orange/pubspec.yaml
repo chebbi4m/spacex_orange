@@ -41,6 +41,7 @@ dependencies:
   test: ^1.21.0
   mockito: ^5.3.2
   build_runner: ^2.1.0
+  intl: ^0.20.1
 
 dev_dependencies:
   flutter_test:

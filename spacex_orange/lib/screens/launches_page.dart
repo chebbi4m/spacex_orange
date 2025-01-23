@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:spacex_orange/models/launch.dart';
 import 'package:spacex_orange/providers/launch_provider.dart';
 import 'package:spacex_orange/screens/launch_details_page.dart';
-import 'package:spacex_orange/screens/offline_mode_page.dart';
+import 'package:spacex_orange/widgets/LaunchListWidget.dart';
+import 'package:spacex_orange/widgets/search_and_sort.dart';
 
 class LaunchesPage extends StatefulWidget {
   const LaunchesPage({Key? key}) : super(key: key);
@@ -72,66 +73,19 @@ class _LaunchesPageState extends State<LaunchesPage> {
 
             return Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search launches...',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[800],
-                        ),
-                        style: const TextStyle(color: Colors.white),
-                        onChanged: (query) {
-                          setState(() {}); // Rebuild the UI when the search query changes
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Sort by Date:',
-                            style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _sortAscending = !_sortAscending; // Toggle sort order
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                SearchAndSortWidget(
+                  searchController: _searchController,
+                  sortAscending: _sortAscending,
+                  onSortChanged: () {
+                    setState(() {
+                      _sortAscending = !_sortAscending;
+                    });
+                  },
                 ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () => spaceXProvider.fetchLaunches(forceRefresh: true),
-                    child: ListView.builder(
-                      itemCount: filteredLaunches.length,
-                      itemBuilder: (context, index) {
-                        final launch = filteredLaunches[index];
-                        return LaunchItem(
-                          launch: launch,
-                          onTap: () => _navigateToLaunchDetails(context, launch),
-                        );
-                      },
-                    ),
-                  ),
+                LaunchListWidget(
+                  launches: filteredLaunches,
+                  onLaunchTap: (launch) => _navigateToLaunchDetails(context, launch),
+                  onRefresh: () => spaceXProvider.fetchLaunches(forceRefresh: true),
                 ),
               ],
             );
@@ -145,72 +99,6 @@ class _LaunchesPageState extends State<LaunchesPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => LaunchDetailsPage(launch: launch),
-      ),
-    );
-  }
-}
-
-class LaunchItem extends StatelessWidget {
-  final SpaceXLaunch launch;
-  final VoidCallback onTap;
-
-  const LaunchItem({
-    Key? key,
-    required this.launch,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'launch-${launch.id}',
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Icon(Icons.rocket_launch, size: 36, color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        launch.missionName,
-                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Date: ${launch.launchDate}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rocket: ${launch.rocketName}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

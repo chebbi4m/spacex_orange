@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spacex_orange/models/history.dart';
 import 'package:spacex_orange/providers/history_provider.dart';
-import 'package:spacex_orange/screens/history_details_page.dart';
+import 'package:spacex_orange/widgets/history_details_page.dart';
+import 'package:spacex_orange/widgets/history_filter.dart';
+import 'package:spacex_orange/widgets/history_item.dart';
+import 'package:spacex_orange/widgets/history_list_widget.dart'; // Import the new widget
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -18,10 +21,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
-      historyProvider.fetchHistory();
-    });
+    _fetchHistory();
   }
 
   @override
@@ -30,21 +30,25 @@ class _HistoryPageState extends State<HistoryPage> {
     super.dispose();
   }
 
-  List<History> _filterAndSortHistory(List<History> history, String query, bool sortAscending) {
-    // Filter by search query
-    final filteredHistory = history.where((event) {
-      return event.title.toLowerCase().contains(query.toLowerCase()) ||
-             event.details.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    // Sort by date
-    filteredHistory.sort((a, b) {
-      final dateA = DateTime.parse(a.eventDateUtc);
-      final dateB = DateTime.parse(b.eventDateUtc);
-      return sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+  void _fetchHistory() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
+      historyProvider.fetchHistory();
     });
+  }
 
-    return filteredHistory;
+  void _toggleSortOrder() {
+    setState(() {
+      _sortAscending = !_sortAscending;
+    });
+  }
+
+  void _navigateToHistoryDetails(BuildContext context, History event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => HistoryDetailsPage(event: event),
+      ),
+    );
   }
 
   @override
@@ -58,10 +62,10 @@ class _HistoryPageState extends State<HistoryPage> {
           } else if (historyProvider.error != null) {
             return Center(child: Text(historyProvider.error!, style: const TextStyle(color: Colors.red)));
           } else {
-            final filteredHistory = _filterAndSortHistory(
-              historyProvider.history,
-              _searchController.text,
-              _sortAscending,
+            final filteredHistory = HistoryFilter.filterAndSort(
+              history: historyProvider.history,
+              query: _searchController.text,
+              sortAscending: _sortAscending,
             );
 
             return CustomScrollView(
@@ -125,11 +129,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                 color: Colors.white,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _sortAscending = !_sortAscending; // Toggle sort order
-                                });
-                              },
+                              onPressed: _toggleSortOrder,
                             ),
                           ],
                         ),
@@ -137,73 +137,14 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                 ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final event = filteredHistory[index];
-                      return HistoryItem(
-                        event: event,
-                        onTap: () => _navigateToHistoryDetails(context, event),
-                      );
-                    },
-                    childCount: filteredHistory.length,
-                  ),
+                HistoryListWidget(
+                  history: filteredHistory,
+                  onHistoryTap: (event) => _navigateToHistoryDetails(context, event),
                 ),
               ],
             );
           }
         },
-      ),
-    );
-  }
-
-  void _navigateToHistoryDetails(BuildContext context, History event) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => HistoryDetailsPage(event: event),
-      ),
-    );
-  }
-}
-
-class HistoryItem extends StatelessWidget {
-  final History event;
-  final VoidCallback onTap;
-
-  const HistoryItem({
-    Key? key,
-    required this.event,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'history-${event.id}',
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Date: ${event.eventDateUtc}',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

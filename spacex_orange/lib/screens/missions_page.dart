@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spacex_orange/models/mission.dart';
 import 'package:spacex_orange/providers/mission_provider.dart';
-import 'package:spacex_orange/screens/mission_details_page.dart';
+import 'package:spacex_orange/widgets/mission_details_page.dart';
+import 'package:spacex_orange/widgets/mission_filter.dart';
+import 'package:spacex_orange/widgets/mission_item.dart';
 
 class MissionsPage extends StatefulWidget {
   const MissionsPage({Key? key}) : super(key: key);
@@ -18,10 +20,7 @@ class _MissionsPageState extends State<MissionsPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final missionProvider = Provider.of<MissionProvider>(context, listen: false);
-      missionProvider.fetchMissions();
-    });
+    _fetchMissions();
   }
 
   @override
@@ -30,20 +29,25 @@ class _MissionsPageState extends State<MissionsPage> {
     super.dispose();
   }
 
-  List<Mission> _filterAndSortMissions(List<Mission> missions, String query, bool sortAscending) {
-    // Filter by mission name
-    final filteredMissions = missions.where((mission) {
-      return mission.missionName.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    // Sort by mission name
-    filteredMissions.sort((a, b) {
-      return sortAscending
-          ? a.missionName.compareTo(b.missionName)
-          : b.missionName.compareTo(a.missionName);
+  void _fetchMissions() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final missionProvider = Provider.of<MissionProvider>(context, listen: false);
+      missionProvider.fetchMissions();
     });
+  }
 
-    return filteredMissions;
+  void _toggleSortOrder() {
+    setState(() {
+      _sortAscending = !_sortAscending;
+    });
+  }
+
+  void _navigateToMissionDetails(BuildContext context, Mission mission) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MissionDetailsPage(mission: mission),
+      ),
+    );
   }
 
   @override
@@ -62,10 +66,10 @@ class _MissionsPageState extends State<MissionsPage> {
           } else if (missionProvider.error != null) {
             return Center(child: Text(missionProvider.error!, style: const TextStyle(color: Colors.red)));
           } else {
-            final filteredMissions = _filterAndSortMissions(
-              missionProvider.missions,
-              _searchController.text,
-              _sortAscending,
+            final filteredMissions = MissionFilter.filterAndSort(
+              missions: missionProvider.missions,
+              query: _searchController.text,
+              sortAscending: _sortAscending,
             );
 
             return Column(
@@ -105,11 +109,7 @@ class _MissionsPageState extends State<MissionsPage> {
                               _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                               color: Colors.white,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _sortAscending = !_sortAscending; // Toggle sort order
-                              });
-                            },
+                            onPressed: _toggleSortOrder,
                           ),
                         ],
                       ),
@@ -135,71 +135,6 @@ class _MissionsPageState extends State<MissionsPage> {
             );
           }
         },
-      ),
-    );
-  }
-
-  void _navigateToMissionDetails(BuildContext context, Mission mission) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => MissionDetailsPage(mission: mission),
-      ),
-    );
-  }
-}
-
-class MissionItem extends StatelessWidget {
-  final Mission mission;
-  final VoidCallback onTap;
-
-  const MissionItem({
-    Key? key,
-    required this.mission,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'mission-${mission.missionId}',
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Icon(Icons.rocket_launch, size: 36, color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        mission.missionName,
-                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

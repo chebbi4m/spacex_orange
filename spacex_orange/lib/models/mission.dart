@@ -19,6 +19,7 @@ class Mission {
     required this.description,
   });
 
+  // Convert JSON to Mission object
   factory Mission.fromJson(Map<String, dynamic> json) {
     return Mission(
       missionName: json['mission_name'] ?? 'Unknown Mission',
@@ -32,12 +33,13 @@ class Mission {
     );
   }
 
+  // Convert Mission object to a Map for database insertion
   Map<String, dynamic> toMap() {
     return {
       'missionName': missionName,
       'missionId': missionId,
-      'manufacturers': manufacturers,
-      'payloadIds': payloadIds,
+      'manufacturers': manufacturers.join(','), // Serialize List<String> to String
+      'payloadIds': payloadIds.join(','), // Serialize List<String> to String
       'wikipedia': wikipedia,
       'website': website,
       'twitter': twitter,
@@ -45,29 +47,17 @@ class Mission {
     };
   }
 
+  // Convert Map (from database) to Mission object
   factory Mission.fromMap(Map<String, dynamic> map) {
     return Mission(
       missionName: map['missionName'],
       missionId: map['missionId'],
-      manufacturers: List<String>.from(map['manufacturers']),
-      payloadIds: List<String>.from(map['payloadIds']),
+      manufacturers: map['manufacturers'].split(','), // Deserialize String to List<String>
+      payloadIds: map['payloadIds'].split(','), // Deserialize String to List<String>
       wikipedia: map['wikipedia'],
       website: map['website'],
       twitter: map['twitter'],
       description: map['description'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'mission_name': missionName,
-      'mission_id': missionId,
-      'manufacturers': manufacturers,
-      'payload_ids': payloadIds,
-      'wikipedia': wikipedia,
-      'website': website,
-      'twitter': twitter,
-      'description': description,
-    };
   }
 }

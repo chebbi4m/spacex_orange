@@ -35,43 +35,14 @@ class MyApp extends StatelessWidget {
       home: FutureBuilder<ConnectivityResult>(
         future: Connectivity().checkConnectivity(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show a loading indicator while checking connectivity
-            return Scaffold(
-              backgroundColor: Colors.black,
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.blue)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Checking connectivity...',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else if (snapshot.hasData) {
+          
             // Navigate to the appropriate page based on connectivity
             if (snapshot.data == ConnectivityResult.none) {
               return const OfflineModePage();
             } else {
               return const MainPage();
             }
-          } else {
-            // Handle error case
-            return Scaffold(
-              backgroundColor: Colors.black,
-              body: Center(
-                child: Text(
-                  'Failed to check connectivity.',
-                  style: TextStyle(color: Colors.red[400], fontSize: 16),
-                ),
-              ),
-            );
-          }
+          
         },
       ),
     );

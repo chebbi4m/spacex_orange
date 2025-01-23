@@ -42,5 +42,15 @@ class SpaceXLaunch {
       details: map['details'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': missionName,
+      'launchDate': launchDate,
+      'details': details,
+      'rocketName': rocketName,
+    };
+  }
 }
 

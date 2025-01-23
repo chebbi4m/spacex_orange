@@ -7,7 +7,16 @@ import 'package:spacex_orange/models/mission.dart';
 
 class SpaceXService {
   final String baseUrl = 'https://api.spacexdata.com/v4';
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper;
+
+  // Add a field for http.Client
+  http.Client httpClient;
+
+  // Constructor to allow dependency injection
+  SpaceXService({DatabaseHelper? dbHelper, http.Client? client})
+      : _dbHelper = dbHelper ?? DatabaseHelper(),
+        httpClient = client ?? http.Client();
+
 
   Future<List<SpaceXLaunch>> getLaunches({int skip = 0, int take = 10}) async {
   try {

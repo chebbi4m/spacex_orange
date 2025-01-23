@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spacex_orange/models/launch.dart';
-import 'package:spacex_orange/providers/launch_provider.dart';
-import 'package:spacex_orange/screens/launch_details_page.dart';
-import 'package:spacex_orange/screens/offline_mode_page.dart';
+import 'package:spacex_orange/models/mission.dart';
+import 'package:spacex_orange/providers/mission_provider.dart';
+import 'package:spacex_orange/screens/mission_details_page.dart';
 
-class LaunchesPage extends StatefulWidget {
-  const LaunchesPage({Key? key}) : super(key: key);
+class MissionsPage extends StatefulWidget {
+  const MissionsPage({Key? key}) : super(key: key);
 
   @override
-  _LaunchesPageState createState() => _LaunchesPageState();
+  _MissionsPageState createState() => _MissionsPageState();
 }
 
-class _LaunchesPageState extends State<LaunchesPage> {
+class _MissionsPageState extends State<MissionsPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _sortAscending = true;
 
@@ -20,8 +19,8 @@ class _LaunchesPageState extends State<LaunchesPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final spaceXProvider = Provider.of<SpaceXProvider>(context, listen: false);
-      spaceXProvider.fetchLaunches();
+      final missionProvider = Provider.of<MissionProvider>(context, listen: false);
+      missionProvider.fetchMissions();
     });
   }
 
@@ -31,21 +30,20 @@ class _LaunchesPageState extends State<LaunchesPage> {
     super.dispose();
   }
 
-  List<SpaceXLaunch> _filterAndSortLaunches(List<SpaceXLaunch> launches, String query, bool sortAscending) {
-    // Filter by search query
-    final filteredLaunches = launches.where((launch) {
-      return launch.missionName.toLowerCase().contains(query.toLowerCase()) ||
-             launch.details.toLowerCase().contains(query.toLowerCase());
+  List<Mission> _filterAndSortMissions(List<Mission> missions, String query, bool sortAscending) {
+    // Filter by mission name
+    final filteredMissions = missions.where((mission) {
+      return mission.missionName.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
-    // Sort by date
-    filteredLaunches.sort((a, b) {
-      final dateA = DateTime.parse(a.launchDate);
-      final dateB = DateTime.parse(b.launchDate);
-      return sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+    // Sort by mission name
+    filteredMissions.sort((a, b) {
+      return sortAscending
+          ? a.missionName.compareTo(b.missionName)
+          : b.missionName.compareTo(a.missionName);
     });
 
-    return filteredLaunches;
+    return filteredMissions;
   }
 
   @override
@@ -55,17 +53,17 @@ class _LaunchesPageState extends State<LaunchesPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('SpaceX Launches', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('SpaceX Missions', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: Consumer<SpaceXProvider>(
-        builder: (context, spaceXProvider, child) {
-          if (spaceXProvider.isLoading && spaceXProvider.launches.isEmpty) {
+      body: Consumer<MissionProvider>(
+        builder: (context, missionProvider, child) {
+          if (missionProvider.isLoading && missionProvider.missions.isEmpty) {
             return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.blue)));
-          } else if (spaceXProvider.error != null) {
-            return Center(child: Text(spaceXProvider.error!, style: const TextStyle(color: Colors.red)));
+          } else if (missionProvider.error != null) {
+            return Center(child: Text(missionProvider.error!, style: const TextStyle(color: Colors.red)));
           } else {
-            final filteredLaunches = _filterAndSortLaunches(
-              spaceXProvider.launches,
+            final filteredMissions = _filterAndSortMissions(
+              missionProvider.missions,
               _searchController.text,
               _sortAscending,
             );
@@ -79,7 +77,7 @@ class _LaunchesPageState extends State<LaunchesPage> {
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          hintText: 'Search launches...',
+                          hintText: 'Search missions by name...',
                           hintStyle: TextStyle(color: Colors.grey[400]),
                           prefixIcon: const Icon(Icons.search, color: Colors.white),
                           border: OutlineInputBorder(
@@ -99,7 +97,7 @@ class _LaunchesPageState extends State<LaunchesPage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            'Sort by Date:',
+                            'Sort by Name:',
                             style: TextStyle(color: Colors.grey[400], fontSize: 14),
                           ),
                           IconButton(
@@ -120,14 +118,14 @@ class _LaunchesPageState extends State<LaunchesPage> {
                 ),
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: () => spaceXProvider.fetchLaunches(forceRefresh: true),
+                    onRefresh: () => missionProvider.fetchMissions(forceRefresh: true),
                     child: ListView.builder(
-                      itemCount: filteredLaunches.length,
+                      itemCount: filteredMissions.length,
                       itemBuilder: (context, index) {
-                        final launch = filteredLaunches[index];
-                        return LaunchItem(
-                          launch: launch,
-                          onTap: () => _navigateToLaunchDetails(context, launch),
+                        final mission = filteredMissions[index];
+                        return MissionItem(
+                          mission: mission,
+                          onTap: () => _navigateToMissionDetails(context, mission),
                         );
                       },
                     ),
@@ -141,29 +139,29 @@ class _LaunchesPageState extends State<LaunchesPage> {
     );
   }
 
-  void _navigateToLaunchDetails(BuildContext context, SpaceXLaunch launch) {
+  void _navigateToMissionDetails(BuildContext context, Mission mission) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => LaunchDetailsPage(launch: launch),
+        builder: (context) => MissionDetailsPage(mission: mission),
       ),
     );
   }
 }
 
-class LaunchItem extends StatelessWidget {
-  final SpaceXLaunch launch;
+class MissionItem extends StatelessWidget {
+  final Mission mission;
   final VoidCallback onTap;
 
-  const LaunchItem({
+  const MissionItem({
     Key? key,
-    required this.launch,
+    required this.mission,
     required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Hero(
-      tag: 'launch-${launch.id}',
+      tag: 'mission-${mission.missionId}',
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         color: Colors.grey[900],
@@ -190,19 +188,10 @@ class LaunchItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        launch.missionName,
+                        mission.missionName,
                         style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Date: ${launch.launchDate}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rocket: ${launch.rocketName}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
+
                     ],
                   ),
                 ),

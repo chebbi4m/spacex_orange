@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:spacex_orange/providers/history_provider.dart';
 import 'package:spacex_orange/providers/launch_provider.dart';
-import 'package:spacex_orange/screens/launches_page.dart';
+import 'package:spacex_orange/providers/mission_provider.dart';
+import 'package:spacex_orange/screens/home_page.dart';
 import 'package:spacex_orange/screens/offline_mode_page.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => SpaceXProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => SpaceXProvider()),
+        ChangeNotifierProvider(create: (context) => MissionProvider()),
+        ChangeNotifierProvider(create: (context) => HistoryProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -24,6 +30,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        scaffoldBackgroundColor: Colors.black,
       ),
       home: FutureBuilder<ConnectivityResult>(
         future: Connectivity().checkConnectivity(),
@@ -51,7 +58,7 @@ class MyApp extends StatelessWidget {
             if (snapshot.data == ConnectivityResult.none) {
               return const OfflineModePage();
             } else {
-              return const LaunchesPage();
+              return const MainPage();
             }
           } else {
             // Handle error case

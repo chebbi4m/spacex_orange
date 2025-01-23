@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spacex_orange/screens/home_page.dart';
 import 'dart:async';
 
 import 'package:spacex_orange/screens/launches_page.dart';
@@ -22,7 +23,7 @@ class _OfflineModePageState extends State<OfflineModePage> {
       if (mounted) {
         Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => LaunchesPage(),
+        builder: (context) => MainPage(),
       ),
     );
       }
